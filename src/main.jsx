@@ -39,6 +39,10 @@ import SearchPage from "./features/products/pages/SearchPage";
 import BecomeDeliveryPage from "./features/deliveryman/pages/SignupDeliveryPage";
 import AdminDeliveryRequests from "./features/dashboard/Admin/Pages/AdminDeliveryRequests";
 import DeliveryAddressPage from "./features/dashboard/delivery/delivery-address";
+import WishlistPage from "./features/wishlist/pages/WishlistPage";
+import NotificationsPage from "./features/notification/pages/NotificationsPage";
+import OrderDetailsPage from "./features/dashboard/Orders/pages/OrderDetailsPage";
+import OrdersPage from "./features/dashboard/Orders/pages/OrdersPage";
 
 
 const router = createBrowserRouter([
@@ -122,10 +126,25 @@ const router = createBrowserRouter([
       path: "/unauthorized",
       element: <UnauthorizedPage />,
     },
-    // {
-    //   path: "/delivery-address",
-    //   element: <DeliveryAddressPage />,
-    // },
+    {
+      path: "/wishlist",
+      element: <WishlistPage />,
+    },
+    {
+      path:  "/notifications",
+      element: <NotificationsPage />,
+    },
+
+    {
+      path: "/orders/:id",
+      element: <OrderDetailsPage />,
+    },
+    {
+      path: "/orders",
+      element: <OrdersPage />,
+    },
+
+   
             {
       path: "/delivery-address",
       element: <RequireAuth />, // protège la route

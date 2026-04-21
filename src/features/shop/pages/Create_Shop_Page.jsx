@@ -1,6 +1,7 @@
 // import { useState } from "react";
 // import { api } from "../../../shared/services/api";
 // import { toast } from "react-hot-toast";
+// import ShopTermsModal from "./ShopTermsPage";
 
 // export default function CreateShopPage({ token }) {
 //   const [form, setForm] = useState({
@@ -11,9 +12,13 @@
 //     latitude: "",
 //     longitude: "",
 //   });
+
 //   const [logoFile, setLogoFile] = useState(null);
 //   const [logoPreview, setLogoPreview] = useState(null);
 //   const [loading, setLoading] = useState(false);
+
+//   const [showTerms, setShowTerms] = useState(true);
+//   const [termsAccepted, setTermsAccepted] = useState(false);
 
 //   const handleChange = (e) => {
 //     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,7 +28,13 @@
 //     const file = e.target.files[0];
 //     if (!file) return;
 
+//     if (file.size > 2 * 1024 * 1024) {
+//       toast.error("Image trop lourde (max 2MB)");
+//       return;
+//     }
+
 //     setLogoFile(file);
+
 //     const reader = new FileReader();
 //     reader.onloadend = () => setLogoPreview(reader.result);
 //     reader.readAsDataURL(file);
@@ -33,26 +44,46 @@
 //     e.preventDefault();
 
 //     if (!form.name || !form.address || !form.latitude || !form.longitude) {
-//       toast.error("Les champs nom, adresse, latitude et longitude sont obligatoires");
+//       toast.error("Veuillez remplir les champs obligatoires");
+//       return;
+//     }
+
+//     if (isNaN(form.latitude) || isNaN(form.longitude)) {
+//       toast.error("Coordonnées invalides");
+//       return;
+//     }
+
+//     if (!termsAccepted) {
+//       toast.error("Vous devez accepter la charte vendeur");
 //       return;
 //     }
 
 //     setLoading(true);
-//     const toastId = toast.loading("Création de la boutique en cours...");
+//     const toastId = toast.loading("Création de votre boutique...");
 
 //     try {
 //       const formData = new FormData();
+
 //       formData.append("name", form.name);
 //       formData.append("description", form.description);
 //       formData.append("address", form.address);
 //       formData.append("phone", form.phone);
-//       formData.append("latitude", parseFloat(form.latitude));
-//       formData.append("longitude", parseFloat(form.longitude));
+//       formData.append("latitude", form.latitude);
+//       formData.append("longitude", form.longitude);
+
+//       // IMPORTANT CHARTE BACKEND
+//       formData.append("termsAccepted", "true");
+//       formData.append("termsAcceptedVersion", "v1.0");
+
 //       if (logoFile) formData.append("logo", logoFile);
 
-//       const { data } = await api.post("/shops", formData);
+//       await api.post("/shops", formData, {
+//         headers: {
+//           "Content-Type": "multipart/form-data",
+//           Authorization: `Bearer ${token}`,
+//         },
+//       });
 
-//       // Reset formulaire
 //       setForm({
 //         name: "",
 //         description: "",
@@ -61,121 +92,157 @@
 //         latitude: "",
 //         longitude: "",
 //       });
+
 //       setLogoFile(null);
 //       setLogoPreview(null);
 
-//       toast.success("Boutique créée avec succès !", { id: toastId });
+//       toast.success("Boutique créée avec succès, en attente de validation", {
+//         id: toastId,
+//       });
 //     } catch (err) {
-//       toast.error(err.response?.data?.error || err.message, { id: toastId });
+//       toast.error(err.response?.data?.error || "Erreur serveur", {
+//         id: toastId,
+//       });
 //     } finally {
 //       setLoading(false);
 //     }
 //   };
 
 //   return (
-//     <div className="max-w-3xl mx-auto mt-12 p-6 bg-white rounded shadow">
-//       <h1 className="text-2xl font-bold mb-6">Créer votre boutique</h1>
+//     <>
+//       {/* MODAL CHARTE */}
+//       <ShopTermsModal
+//         open={showTerms}
+//         onClose={() => setShowTerms(false)}
+//         onAccept={() => {
+//           setTermsAccepted(true);
+//           setShowTerms(false);
+//         }}
+//       />
 
-//       <form onSubmit={handleSubmit} className="space-y-4">
-//         {/* Nom */}
-//         <div>
-//           <label className="block mb-1 font-semibold">Nom de la boutique *</label>
-//           <input
-//             type="text"
-//             name="name"
-//             value={form.name}
-//             onChange={handleChange}
-//             className="w-full border px-3 py-2 rounded"
-//           />
-//         </div>
+//       {/* PAGE */}
+//       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+//         <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl overflow-hidden">
 
-//         {/* Description */}
-//         <div>
-//           <label className="block mb-1 font-semibold">Description</label>
-//           <textarea
-//             name="description"
-//             value={form.description}
-//             onChange={handleChange}
-//             className="w-full border px-3 py-2 rounded"
-//           />
-//         </div>
-
-//         {/* Logo */}
-//         <div>
-//           <label className="block mb-1 font-semibold">Logo de la boutique</label>
-//           <input type="file" accept="image/*" onChange={handleLogoChange} />
-//           {logoPreview && (
-//             <img src={logoPreview} alt="Aperçu logo" className="mt-2 h-24 w-24 object-contain border p-1" />
-//           )}
-//         </div>
-
-//         {/* Adresse et téléphone */}
-//         <div>
-//           <label className="block mb-1 font-semibold">Adresse *</label>
-//           <input
-//             type="text"
-//             name="address"
-//             value={form.address}
-//             onChange={handleChange}
-//             className="w-full border px-3 py-2 rounded"
-//           />
-//         </div>
-
-//         <div>
-//           <label className="block mb-1 font-semibold">Téléphone</label>
-//           <input
-//             type="text"
-//             name="phone"
-//             value={form.phone}
-//             onChange={handleChange}
-//             className="w-full border px-3 py-2 rounded"
-//           />
-//         </div>
-
-//         {/* Latitude / Longitude */}
-//         <div className="grid grid-cols-2 gap-4">
-//           <div>
-//             <label className="block mb-1 font-semibold">Latitude *</label>
-//             <input
-//               type="number"
-//               name="latitude"
-//               value={form.latitude}
-//               onChange={handleChange}
-//               step="0.000001"
-//               className="w-full border px-3 py-2 rounded"
-//             />
+//           {/* HEADER */}
+//           <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 p-6">
+//             <h1 className="text-2xl md:text-3xl font-bold text-white">
+//               Créer votre boutique
+//             </h1>
+//             <p className="text-white/90 text-sm mt-1">
+//               Remplissez les informations pour lancer votre activité
+//             </p>
 //           </div>
-//           <div>
-//             <label className="block mb-1 font-semibold">Longitude *</label>
-//             <input
-//               type="number"
-//               name="longitude"
-//               value={form.longitude}
-//               onChange={handleChange}
-//               step="0.000001"
-//               className="w-full border px-3 py-2 rounded"
-//             />
-//           </div>
-//         </div>
 
-//         {/* Submit */}
-//         <button
-//           type="submit"
-//           className={`w-full py-2 rounded font-semibold text-white ${
-//             loading ? "bg-gray-400 cursor-not-allowed" : "bg-yellow-400 hover:bg-yellow-500"
-//           }`}
-//           disabled={loading}
-//         >
-//           {loading ? "Création..." : "Créer ma boutique"}
-//         </button>
-//       </form>
-//     </div>
+//           {/* FORM */}
+//           <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+
+//             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+//               <div>
+//                 <label className="text-sm font-semibold text-gray-700">
+//                   Nom de la boutique *
+//                 </label>
+//                 <input
+//                   type="text"
+//                   name="name"
+//                   value={form.name}
+//                   onChange={handleChange}
+//                   className="mt-2 w-full border rounded-lg px-4 py-3"
+//                 />
+//               </div>
+
+//               <div>
+//                 <label className="text-sm font-semibold text-gray-700">
+//                   Téléphone
+//                 </label>
+//                 <input
+//                   type="text"
+//                   name="phone"
+//                   value={form.phone}
+//                   onChange={handleChange}
+//                   className="mt-2 w-full border rounded-lg px-4 py-3"
+//                 />
+//               </div>
+//             </div>
+
+//             <div>
+//               <label className="text-sm font-semibold text-gray-700">
+//                 Description
+//               </label>
+//               <textarea
+//                 name="description"
+//                 value={form.description}
+//                 onChange={handleChange}
+//                 rows="4"
+//                 className="mt-2 w-full border rounded-lg px-4 py-3"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="text-sm font-semibold text-gray-700">
+//                 Logo
+//               </label>
+//               <input type="file" accept="image/*" onChange={handleLogoChange} />
+//               {logoPreview && (
+//                 <img
+//                   src={logoPreview}
+//                   className="w-24 h-24 mt-2 object-cover border rounded"
+//                 />
+//               )}
+//             </div>
+
+//             <div>
+//               <label className="text-sm font-semibold text-gray-700">
+//                 Adresse *
+//               </label>
+//               <input
+//                 type="text"
+//                 name="address"
+//                 value={form.address}
+//                 onChange={handleChange}
+//                 className="mt-2 w-full border rounded-lg px-4 py-3"
+//               />
+//             </div>
+
+//             <div className="grid grid-cols-2 gap-6">
+//               <input
+//                 type="number"
+//                 name="latitude"
+//                 value={form.latitude}
+//                 onChange={handleChange}
+//                 placeholder="Latitude"
+//                 className="border p-3 rounded"
+//               />
+//               <input
+//                 type="number"
+//                 name="longitude"
+//                 value={form.longitude}
+//                 onChange={handleChange}
+//                 placeholder="Longitude"
+//                 className="border p-3 rounded"
+//               />
+//             </div>
+
+//             <button
+//               type="submit"
+//               disabled={loading}
+//               className="w-full py-3 bg-yellow-400 rounded-lg font-semibold text-white"
+//             >
+//               {loading ? "Création..." : "Créer ma boutique"}
+//             </button>
+//           </form>
+//         </div>
+//       </div>
+//     </>
 //   );
 // }
+
 
 import { useState } from "react";
 import { api } from "../../../shared/services/api";
 import { toast } from "react-hot-toast";
+import ShopTermsModal from "./ShopTermsPage";
 
 export default function CreateShopPage({ token }) {
   const [form, setForm] = useState({
@@ -190,6 +257,10 @@ export default function CreateShopPage({ token }) {
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // MODAL CHARTE
+  const [showTerms, setShowTerms] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -224,6 +295,11 @@ export default function CreateShopPage({ token }) {
       return;
     }
 
+    if (!termsAccepted) {
+      toast.error("Vous devez accepter la charte vendeur");
+      return;
+    }
+
     setLoading(true);
     const toastId = toast.loading("Création de votre boutique...");
 
@@ -236,6 +312,10 @@ export default function CreateShopPage({ token }) {
       formData.append("phone", form.phone);
       formData.append("latitude", form.latitude);
       formData.append("longitude", form.longitude);
+
+      // IMPORTANT BACKEND CHARTE
+      formData.append("termsAccepted", "true");
+      formData.append("termsAcceptedVersion", "v1.0");
 
       if (logoFile) formData.append("logo", logoFile);
 
@@ -258,7 +338,7 @@ export default function CreateShopPage({ token }) {
       setLogoFile(null);
       setLogoPreview(null);
 
-      toast.success("Boutique créée avec succès, en attente de validation", {
+      toast.success("Boutique créée avec succès", {
         id: toastId,
       });
     } catch (err) {
@@ -271,150 +351,131 @@ export default function CreateShopPage({ token }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl overflow-hidden">
-        
-        {/* HEADER */}
-        <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 p-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-white">
-            Créer votre boutique
-          </h1>
-          <p className="text-white/90 text-sm mt-1">
-            Remplissez les informations pour lancer votre activité
-          </p>
-        </div>
+    <>
+      {/* MODAL CHARTE */}
+      <ShopTermsModal
+        open={showTerms}
+        onClose={() => setShowTerms(false)}
+        onAccept={() => {
+          setTermsAccepted(true);
+          setShowTerms(false);
+        }}
+      />
 
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl overflow-hidden">
 
-          {/* GRID TOP */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* HEADER */}
+          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 p-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              Créer votre boutique
+            </h1>
+            <p className="text-white/90 text-sm mt-1">
+              Remplissez les informations pour lancer votre activité
+            </p>
+          </div>
 
-            {/* Nom */}
-            <div>
-              <label className="text-sm font-semibold text-gray-700">
-                Nom de la boutique *
-              </label>
+          <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+
+            {/* NOM + PHONE */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <input
-                type="text"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="mt-2 w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-400 outline-none"
-                placeholder="Ex: Congo Shop"
+                placeholder="Nom de la boutique *"
+                className="border p-3 rounded-lg"
               />
-            </div>
 
-            {/* Téléphone */}
-            <div>
-              <label className="text-sm font-semibold text-gray-700">
-                Téléphone
-              </label>
               <input
-                type="text"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                className="mt-2 w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-400 outline-none"
-                placeholder="+243 ..."
+                placeholder="Téléphone"
+                className="border p-3 rounded-lg"
               />
             </div>
-          </div>
 
-          {/* DESCRIPTION */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700">
-              Description
-            </label>
+            {/* DESCRIPTION */}
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              rows="4"
-              className="mt-2 w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="Décrivez votre boutique..."
+              placeholder="Description"
+              className="border p-3 rounded-lg w-full"
+              rows={4}
             />
-          </div>
 
-          {/* UPLOAD LOGO */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700">
-              Logo de la boutique
-            </label>
-
-            <div className="mt-2 flex flex-col md:flex-row items-start gap-6">
+            {/* LOGO */}
+            <div>
               <input type="file" accept="image/*" onChange={handleLogoChange} />
-
               {logoPreview && (
-                <div className="w-24 h-24 border rounded-lg overflow-hidden shadow">
-                  <img
-                    src={logoPreview}
-                    alt="logo preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <img
+                  src={logoPreview}
+                  className="w-24 h-24 mt-2 rounded border object-cover"
+                />
               )}
             </div>
-          </div>
 
-          {/* ADDRESS */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700">
-              Adresse *
-            </label>
+            {/* ADRESSE */}
             <input
-              type="text"
               name="address"
               value={form.address}
               onChange={handleChange}
-              className="mt-2 w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-400 outline-none"
-              placeholder="Adresse complète"
+              placeholder="Adresse *"
+              className="border p-3 rounded-lg w-full"
             />
-          </div>
 
-          {/* COORDONNEES */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-semibold text-gray-700">
-                Latitude *
-              </label>
+            {/* GPS */}
+            <div className="grid grid-cols-2 gap-4">
               <input
                 type="number"
                 name="latitude"
                 value={form.latitude}
                 onChange={handleChange}
-                className="mt-2 w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-400 outline-none"
+                placeholder="Latitude"
+                className="border p-3 rounded-lg"
               />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-gray-700">
-                Longitude *
-              </label>
               <input
                 type="number"
                 name="longitude"
                 value={form.longitude}
                 onChange={handleChange}
-                className="mt-2 w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-400 outline-none"
+                placeholder="Longitude"
+                className="border p-3 rounded-lg"
               />
             </div>
-          </div>
 
-          {/* BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-yellow-400 hover:bg-yellow-500"
-            }`}
-          >
-            {loading ? "Création en cours..." : "Créer ma boutique"}
-          </button>
-        </form>
+            {/* CHARTE BUTTON */}
+            <button
+              type="button"
+              onClick={() => setShowTerms(true)}
+              className="w-full border py-2 rounded-lg text-sm hover:bg-gray-100"
+            >
+              Lire et accepter la charte vendeur
+            </button>
+
+            {/* STATUS CHARTE */}
+            {/* <p className="text-sm text-center">
+              Statut :{" "}
+              {termsAccepted ? (
+                <span className="text-green-600 font-bold">Acceptée</span>
+              ) : (
+                <span className="text-red-500 font-bold">Non acceptée</span>
+              )}
+            </p> */}
+
+            {/* SUBMIT */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-yellow-400 rounded-lg font-semibold text-white"
+            >
+              {loading ? "Création..." : "Créer ma boutique"}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,49 +1,222 @@
 import React, { useState } from "react";
 import { useCartStore } from "../store/cartStore";
-import ConfirmModal from "../../../../shared/components/ConfirmModal";
 
 export default function CartItemCard({ item }) {
   const { updateQuantity, removeItem } = useCartStore();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const increase = () => updateQuantity(item.id, item.quantity + 1);
-  const decrease = () => item.quantity > 1 && updateQuantity(item.id, item.quantity - 1);
+  const price = item.price;
+  const total = price * item.quantity;
 
-  const handleRemove = async () => {
-    await removeItem(item.id);
-    setModalOpen(false);
+  const imageUrl =
+  item.variant?.images?.[0] ||
+  item.product?.images?.[0] ||
+  item.product?.image ||
+  "/placeholder.png";
+
+  const handleQtyChange = async (newQty) => {
+    if (newQty < 1) return;
+
+    setLoading(true);
+    await updateQuantity(item.id, newQty);
+    setLoading(false);
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow hover:shadow-md transition items-center sm:items-start">
-      <img
-        src={item.product?.images?.[0] || "/placeholder.png"}
-        alt={item.product?.name}
-        className="w-32 h-32 sm:w-24 sm:h-24 object-cover rounded-lg"
-      />
-      <div className="flex-1 flex flex-col sm:flex-row justify-between w-full">
-        <div>
-          <h3 className="font-semibold text-lg">{item.product?.name}</h3>
-          <p className="text-sm text-gray-500">{item.price} $</p>
-          <div className="flex items-center gap-3 mt-3">
-            <button onClick={decrease} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">-</button>
-            <span className="font-medium">{item.quantity}</span>
-            <button onClick={increase} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+</button>
-            <button onClick={() => setModalOpen(true)} className="ml-4 text-red-500 hover:underline">
-              Supprimer
-            </button>
-          </div>
+    <div className="flex gap-4 border rounded-xl p-4 bg-white shadow-sm">
+
+      {/* IMAGE VARIANT / PRODUCT */}
+      {/* <img
+      src={
+        item.variant?.images?.[0] ||
+        item.product?.image ||
+        "/placeholder.png"
+      }
+      className="w-24 h-24 object-cover rounded-lg"
+      alt={item.product.name}
+    /> */}
+
+  <img
+  src={
+    item.variant?.images?.[0]
+      ? `http://localhost:3000${item.variant.images[0]}`
+      : item.product?.images?.[0]
+      ? `http://localhost:3000${item.product.images[0]}`
+      : item.product?.image
+      ? `http://localhost:3000${item.product.image}`
+      : "/placeholder.png"
+  }
+  className="w-24 h-24 object-cover rounded-lg"
+  alt={item.product.name}
+/>
+
+      {/* DETAILS */}
+      <div className="flex-1">
+
+        <h3 className="font-semibold text-gray-800">
+          {item.product.name}
+        </h3>
+
+        {/* VARIANT DISPLAY */}
+    
+{item.variant?.attributes ? (
+  <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+    {Object.entries(item.variant.attributes).map(([key, val]) => (
+      <span
+        key={key}
+        className="px-2 py-1 bg-gray-100 rounded-full"
+      >
+        {key}: {val}
+      </span>
+    ))}
+  </div>
+) : (
+  <p className="text-sm text-gray-400">
+    Chargement variante...
+  </p>
+)}
+        {/* PRICE */}
+        <p className="text-sm text-gray-500">
+          {price.toFixed(2)} $
+        </p>
+
+        {/* QTY CONTROLLER */}
+        <div className="flex items-center gap-2 mt-3">
+
+          <button
+            onClick={() => handleQtyChange(item.quantity - 1)}
+            className="px-2 py-1 bg-gray-200 rounded"
+            disabled={loading}
+          >
+            -
+          </button>
+
+          <span>{item.quantity}</span>
+
+          <button
+            onClick={() => handleQtyChange(item.quantity + 1)}
+            className="px-2 py-1 bg-gray-200 rounded"
+            disabled={loading}
+          >
+            +
+          </button>
+
+          {/* DELETE */}
+          <button
+            onClick={() => removeItem(item.id)}
+            className="ml-4 text-red-500 text-sm hover:underline"
+          >
+            Supprimer
+          </button>
         </div>
-        <div className="font-semibold text-lg mt-3 sm:mt-0">{(item.price * item.quantity).toFixed(2)} $</div>
       </div>
 
-      {/* MODAL */}
-      <ConfirmModal
-        isOpen={modalOpen}
-        message="Voulez-vous vraiment supprimer cet article ?"
-        onConfirm={handleRemove}
-        onCancel={() => setModalOpen(false)}
-      />
+      {/* TOTAL */}
+      <div className="font-bold text-right">
+        {total.toFixed(2)} $
+      </div> 
     </div>
   );
 }
+
+// import React, { useState } from "react";
+// import { useCartStore } from "../store/cartStore";
+
+// export default function CartItemCard({ item }) {
+//   const { updateQuantity, removeItem } = useCartStore();
+//   const [loading, setLoading] = useState(false);
+
+//   const price = item.price;
+//   const total = price * item.quantity;
+
+//   const imageUrl =
+//     item.variant?.images?.[0] ||
+//     item.product?.images?.[0] ||
+//     item.product?.image ||
+//     "/placeholder.png";
+
+//   const handleQtyChange = async (newQty) => {
+//     if (newQty < 1) return;
+
+//     setLoading(true);
+//     await updateQuantity(item.id, newQty);
+//     setLoading(false);
+//   };
+
+//   return (
+//     <div className="flex gap-4 border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
+
+//       {/* IMAGE */}
+//       <img
+//         src={
+//           imageUrl.startsWith("http")
+//             ? imageUrl
+//             : `http://localhost:3000${imageUrl}`
+//         }
+//         className="w-24 h-24 object-cover rounded-lg"
+//         alt={item.product.name}
+//       />
+
+//       {/* DETAILS */}
+//       <div className="flex-1">
+
+//         <h3 className="font-semibold text-gray-800">
+//           {item.product.name}
+//         </h3>
+
+//         {/* VARIANT */}
+//         {item.variant?.attributes ? (
+//           <div className="flex flex-wrap gap-2 text-xs text-gray-600 mt-1">
+//             {Object.entries(item.variant.attributes).map(([key, val]) => (
+//               <span key={key} className="px-2 py-1 bg-gray-100 rounded-full">
+//                 {key}: {val}
+//               </span>
+//             ))}
+//           </div>
+//         ) : (
+//           <p className="text-sm text-gray-400">Produit standard</p>
+//         )}
+
+//         {/* PRICE */}
+//         <p className="text-sm text-gray-500 mt-1">
+//           {price.toFixed(2)} $
+//         </p>
+
+//         {/* QTY */}
+//         <div className="flex items-center gap-2 mt-3">
+
+//           <button
+//             onClick={() => handleQtyChange(item.quantity - 1)}
+//             className="px-2 py-1 bg-gray-200 rounded"
+//             disabled={loading}
+//           >
+//             -
+//           </button>
+
+//           <span>{item.quantity}</span>
+
+//           <button
+//             onClick={() => handleQtyChange(item.quantity + 1)}
+//             className="px-2 py-1 bg-gray-200 rounded"
+//             disabled={loading}
+//           >
+//             +
+//           </button>
+
+//           <button
+//             onClick={() => removeItem(item.id)}
+//             className="ml-4 text-red-500 text-sm hover:underline"
+//           >
+//             Supprimer
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* TOTAL */}
+//       <div className="font-bold text-right">
+//         {total.toFixed(2)} $
+//       </div>
+
+//     </div>
+//   );
+// }

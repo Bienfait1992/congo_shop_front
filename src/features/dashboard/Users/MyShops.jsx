@@ -12,7 +12,7 @@ export default function MyShops() {
     if (!token) return;
 
     api
-      .get("/shops", {
+      .get("/shops/my-shops", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setShops(res.data))
