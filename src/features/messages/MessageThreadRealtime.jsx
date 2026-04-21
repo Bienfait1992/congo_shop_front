@@ -173,7 +173,7 @@ import { useUserStore } from "../../app/store/userStore";
 const SOCKET_URL = "http://localhost:3000";
 const API_URL = "http://localhost:3000/api/messages";
 
-export default function MessageThreadRealtime({ currentUserId, otherUserId }) {
+export default function MessageThreadRealtime({ currentUserId, otherUserId, onClose }) {
   const [messages, setMessages] = useState([]);
   const [unreadIds, setUnreadIds] = useState([]);
   const [messageInput, setMessageInput] = useState("");
@@ -309,6 +309,10 @@ export default function MessageThreadRealtime({ currentUserId, otherUserId }) {
     const payload = { receiverId: otherUserId, message: trimmedMessage };
 
     try {
+      console.log("📤 SEND PAYLOAD:", {
+  receiverId: otherUserId,
+  message: messageInput,
+});
       const res = await axios.post(API_URL, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -326,7 +330,7 @@ export default function MessageThreadRealtime({ currentUserId, otherUserId }) {
 
       setMessageInput("");
     } catch (err) {
-      console.error("❌ Erreur envoi message:", err);
+      console.error("Erreur envoi message:", err);
     }
   };
 
@@ -334,55 +338,17 @@ export default function MessageThreadRealtime({ currentUserId, otherUserId }) {
     if (e.key === "Enter") handleSend();
   };
 
-  // return (
-  //   <div className="flex flex-col h-[500px] border rounded shadow bg-white">
-  //     {/* Messages */}
-  //     <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#FFFFFF]">
-  //       {/* E5DDD5 */}
-  //       {messages.map((msg, index) => (
-  //         <div
-  //           key={`${msg.id}_${index}`}
-  //           className={`p-3 rounded-lg max-w-[70%] break-words relative
-  //             ${
-  //               msg.senderId === currentUserId
-  //                 ? "bg-blue-100 text-black ml-auto"
-  //                 : "bg-white text-black mr-auto"
-  //             }`}
-  //         >
-  //           {msg.message}
-  //           <span className="text-xs text-gray-400 absolute bottom-1 right-2">
-  //             {new Date(msg.createdAt).toLocaleTimeString([], {
-  //               hour: "2-digit",
-  //               minute: "2-digit",
-  //             })}
-  //           </span>
-  //         </div>
-  //       ))}
-  //       <div ref={messagesEndRef} />
-  //     </div>
-
-  //     {/* Input */}
-  //     <div className="p-2 flex gap-2 border-t bg-gray-100">
-  //       <input
-  //         type="text"
-  //         value={messageInput}
-  //         onChange={(e) => setMessageInput(e.target.value)}
-  //         onKeyPress={handleKeyPress}
-  //         placeholder="Tapez un message..."
-  //         className="flex-1 p-3 border rounded-full focus:outline-none focus:ring focus:border-blue-400"
-  //       />
-  //       <button
-  //         onClick={handleSend}
-  //         className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
-  //       >
-  //         Envoyer
-  //       </button>
-  //     </div>
-  //   </div>
-  // );
 
   return (
   <div className="fixed bottom-0 right-0 w-full md:w-[400px] h-[40vh] border rounded-t-lg shadow-lg bg-white flex flex-col">
+    
+    <div className="flex justify-between items-center p-2 border-b bg-gray-50">
+  <p className="text-sm font-semibold">Chat</p>
+
+  <button onClick={onClose} className="text-gray-500">
+    ✕
+  </button>
+</div>
     {/* Messages */}
     <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#FFFFFF]">
       {messages.map((msg, index) => (

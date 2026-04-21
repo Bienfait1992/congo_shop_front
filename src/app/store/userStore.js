@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useCartStore } from "../../features/cart/presentation/store/cartStore";
 
 export const useUserStore = create((set, get) => ({
   // ⚡ état initial
@@ -11,6 +12,7 @@ export const useUserStore = create((set, get) => ({
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     set({ user: userData, token });
+    useCartStore.getState().fetchCart();
   },
 
   // Déconnexion : supprime token et infos utilisateur
@@ -19,6 +21,8 @@ export const useUserStore = create((set, get) => ({
     localStorage.removeItem("user");
     set({ user: null, token: null });
   },
+
+  
 
   // Vérifie si l'utilisateur est connecté
   isLoggedIn: () => !!get().token,

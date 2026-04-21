@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { cartService } from "../services/cartService";
 
-export const useCartStore = create((set) => ({
+export const useCartStore = create((set, get) => ({
   cart: null,
   loading: false,
 
